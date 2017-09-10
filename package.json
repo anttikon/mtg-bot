@@ -1,0 +1,42 @@
+{
+  "name": "mtg-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "babel": {
+    "plugins": [
+      "transform-runtime",
+      "transform-object-rest-spread"
+    ],
+    "presets": [
+      "babel-preset-env"
+    ]
+  },
+  "scripts": {
+    "test": "jest .",
+    "start": "babel ./src -d build && node build/app",
+    "dev": "nodemon ./src/app.js --exec babel-node",
+    "eslint": "eslint src"
+  },
+  "engines": {
+    "node": "8.*"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.0",
+    "botkit": "^0.5.8",
+    "lodash": "^4.13.1",
+    "node-fetch": "^1.7.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.6.1",
+    "eslint-config-airbnb-base": "^12.0.0",
+    "eslint-plugin-import": "^2.7.0",
+    "jest": "^20.0.4",
+    "nodemon": "^1.11.0"
+  }
+}
