@@ -1,12 +1,35 @@
-import { uniq, sumBy } from 'lodash'
-import Botkit from 'botkit'
+import Hapi from 'hapi'
+import { uniq, sumBy, flatten } from 'lodash'
+import { slackbot } from 'botkit'
 import Card from './Card'
 import api from './api'
 
-const token = process.env.TOKEN
+const server = new Hapi.Server();
+server.connection({
+  host: process.env.HOST || '0.0.0.0',
+  port: process.env.PORT || 6500
+})
 
-const controller = Botkit.slackbot({ debug: false })
-controller.spawn({ token }).startRTM()
+server.route({
+  method: 'GET',
+  path: '/api/v1/health',
+  handler: (request, reply) => reply({ ok: true })
+});
+
+server.start((err) => {
+  if (err) {
+    throw err;
+  }
+  console.log('Server running at:', server.info.uri);
+});
+
+const controller = slackbot({ debug: false })
+const bot = controller.spawn({ token: process.env.TOKEN })
+bot.startRTM((err) => {
+  if (err) {
+    console.log('ERROR!', err)
+  }
+})
 
 function parseCardQuery(message) {
   const bracketedCardNames = message.match(/\[(.*?)\]/g) || []
@@ -16,14 +39,19 @@ function parseCardQuery(message) {
 async function populateOwnedBy(cards) {
   const ownedCardStats = await api.mtgCatalog.getOwnerStatistics(cards.map(card => card.name))
   return cards.map((card) => {
-    if (!ownedCardStats[card.name]) {
+    const cardStats = ownedCardStats.filter(cardStats => cardStats.cardName === card.name)
+
+    if (!cardStats) {
       return card
     }
 
-    const usernames = uniq(ownedCardStats[card.name].map(ownedCard => ownedCard.username))
-    const ownedBy = usernames.map((username) => {
-      const results = ownedCardStats[card.name].filter(owned => owned.username === username)
-      return { username, ownedCount: sumBy(results, 'ownedCount'), blockCount: results.length }
+    const usernames = cardStats.map(cardStat => cardStat.owners.map(owner => owner.username))
+    const uniqueUsernames = uniq(flatten(usernames))
+
+    const ownedBy = uniqueUsernames.map(username => {
+      const statistics = cardStats.map(cardStat => cardStat.owners.find(owner => owner.username === username)).filter(v => !!v)
+      const blocks = statistics.map(statistic => statistic.blockName)
+      return { username: username, ownedCount: sumBy(statistics, 'ownedCount'), blocks }
     })
 
     return { ...card, ownedBy }
@@ -38,11 +66,8 @@ async function getMessageReply(cards) {
     return { username, icon_emoji, text: ':clippy: - No results! :sob:' }
   } else if (cards.length > 100) {
     return { username, icon_emoji, text: `:clippy: - Too many results: ${cards.length}` }
-  } else if (cards.length > 50) {
-    const text = cards.map(card => card.name).join('  /  ')
-    return { username, icon_emoji, text }
   } else if (cards.length > 5) {
-    const text = cards.map(card => `\`${card.name}\``).join(', ')
+    const text = cards.map(card => card.displayName).join('  /  ')
     return { username, icon_emoji, text }
   }
 

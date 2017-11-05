@@ -7,16 +7,14 @@ export default class Card {
 
   static getImageUrl(card) {
     if (card.flipMultiverseid) {
-      const frontMultiverseId = card.cardNumber.endsWith('a') ? card.multiverseid : card.flipMultiverseid
-      const backMultiverseId = card.cardNumber.endsWith('a') ? card.flipMultiverseid : card.multiverseid
-      return `${process.env.MTG_IMAGE_URL}/api/v1/images?multiverseid=${frontMultiverseId}&multiverseid=${backMultiverseId}`
+      return `${process.env.MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseid}&multiverseid=${card.flipMultiverseid}`
     }
     return `${process.env.MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseid}`
   }
 
   static formatOwnedBy(card) {
     const sortedCards = orderBy(card.ownedBy, 'ownedCount', 'desc')
-    return sortedCards.map(user => `${user.username}: ${user.ownedCount} (${user.blockCount} different ${user.blockCount > 1 ? 'blocks' : 'block'})`).join('\n')
+    return sortedCards.map(user => `${user.username}: ${user.ownedCount} || ${user.blocks.join(', ')}`).join('\n')
   }
 
   static createLinks(card) {
@@ -28,7 +26,7 @@ export default class Card {
   toSlackAttachment() {
     const { card } = this
     const slackAttachment = {
-      title: card.name,
+      title: card.displayName,
       title_link: `http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=${card.multiverseid}`,
       image_url: Card.getImageUrl(card),
       footer: Card.formatOwnedBy(card),

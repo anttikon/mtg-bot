@@ -13,7 +13,7 @@ export default {
   mtgCatalog: {
     getOwnerStatistics: async (cardNames) => {
       const qs = querystring.stringify({ cardName: cardNames })
-      return (await fetch(`${process.env.MTG_CATALOG_URL}/ext/api/card-owners?${qs}`)).json()
+      return (await fetch(`${process.env.MTG_CATALOG_URL}/api/ext/cards?${qs}`)).json()
     },
   },
 }
