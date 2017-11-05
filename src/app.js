@@ -51,7 +51,10 @@ async function getMessageReply(cards) {
   return { username, icon_emoji, attachments }
 }
 
-controller.hears([''], ['ambient', 'direct_message'], (bot, message) => {
+const DIRECT_MESSAGE = 'direct_message'
+const AMBIENT = 'ambient'
+
+controller.hears([/\[.*?]/g], [AMBIENT, DIRECT_MESSAGE], (bot, message) => {
   controller.storage.users.get(message.user, async () => {
     const cardQuery = parseCardQuery(message.text)
     if (cardQuery.length > 0) {
