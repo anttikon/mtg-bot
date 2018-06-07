@@ -6,26 +6,26 @@ import api from './api'
 
 import logger from './logger'
 
-const server = new Hapi.Server();
+const server = new Hapi.Server()
 server.connection({
   host: process.env.HOST || '0.0.0.0',
-  port: process.env.PORT || 6500
+  port: process.env.PORT || 6500,
 })
 
 server.route({
   method: 'GET',
   path: '/api/v1/health',
-  handler: (request, reply) => reply({ ok: true })
-});
+  handler: (request, reply) => reply({ ok: true }),
+})
 
 server.start((err) => {
   if (err) {
-    throw err;
+    throw err
   }
   logger.info('Server running at:', server.info.uri)
-});
+})
 
-const controller = slackbot({ debug: false })
+const controller = slackbot({ debug: false, retry: Infinity })
 const bot = controller.spawn({ token: process.env.TOKEN })
 bot.startRTM((err) => {
   if (err) {
@@ -53,7 +53,7 @@ async function populateOwnedBy(cards) {
     const ownedBy = uniqueUsernames.map(username => {
       const statistics = cardStats.map(cardStat => cardStat.owners.find(owner => owner.username === username)).filter(v => !!v)
       const blocks = statistics.map(statistic => statistic.blockName)
-      return { username: username, ownedCount: sumBy(statistics, 'ownedCount'), blocks }
+      return { username, ownedCount: sumBy(statistics, 'ownedCount'), blocks }
     })
 
     return { ...card, ownedBy }
