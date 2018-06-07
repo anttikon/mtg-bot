@@ -21,7 +21,7 @@
     "eslint": "eslint src"
   },
   "engines": {
-    "node": "8.*"
+    "node": "9.*"
   },
   "author": "",
   "license": "ISC",
