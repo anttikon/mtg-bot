@@ -4,6 +4,8 @@ import { slackbot } from 'botkit'
 import Card from './Card'
 import api from './api'
 
+import logger from './logger'
+
 const server = new Hapi.Server();
 server.connection({
   host: process.env.HOST || '0.0.0.0',
@@ -20,14 +22,14 @@ server.start((err) => {
   if (err) {
     throw err;
   }
-  console.log('Server running at:', server.info.uri);
+  logger.info('Server running at:', server.info.uri)
 });
 
 const controller = slackbot({ debug: false })
 const bot = controller.spawn({ token: process.env.TOKEN })
 bot.startRTM((err) => {
   if (err) {
-    console.log('ERROR!', err)
+    logger.error('Error!', err)
   }
 })
 
