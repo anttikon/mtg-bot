@@ -9,7 +9,7 @@ export default class Card {
     if (card.multiverseids) {
       return `${process.env.MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseids.join('&multiverseid=')}`
     }
-    return `${process.env.MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseid}`
+    return `${process.env.MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseId}`
   }
 
   static formatOwnedBy(card) {
@@ -27,7 +27,7 @@ export default class Card {
     const { card } = this
     const slackAttachment = {
       title: card.names ? `${card.names[0]} / ${card.names[1]}` : card.name,
-      title_link: `http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=${card.multiverseid}`,
+      title_link: `http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=${card.multiverseId}`,
       image_url: Card.getImageUrl(card),
       footer: Card.formatOwnedBy(card),
     }
