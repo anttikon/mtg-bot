@@ -1,26 +1,10 @@
 const { orderBy, flatten, sumBy, uniq, sample } = require('lodash')
-const fetch = require('node-fetch')
-const { getParameters } = require('./utils')
+const { getParameters, postSlackMessage } = require('./utils')
+const { getCardsFromMtgApi, fetchOwnedByStatistics } = require('./integrations')
 
 function parseCardQuery(message) {
   const bracketedCardNames = message.match(/\[(.*?)\]/g) || []
   return bracketedCardNames.map(cardName => cardName.substring(1, cardName.length - 1))
-}
-
-const querystringify = (query, attribute) => query.map(value => `${attribute}=${encodeURIComponent(value)}`).join('&')
-
-async function postMessage(message) {
-  const { MTG_BOT_SLACK_TOKEN_PROD } = await getParameters('MTG_BOT_SLACK_TOKEN_PROD')
-  return fetch('https://slack.com/api/chat.postMessage', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${MTG_BOT_SLACK_TOKEN_PROD}`,
-      'Content-Type': 'application/json;charset=utf-8'
-    },
-    body: JSON.stringify({
-      ...message
-    })
-  })
 }
 
 function getImageUrl(card, MTG_IMAGE_URL) {
@@ -70,18 +54,6 @@ function getUniqueCardsWithRandomMultiverseId(cards) {
   }, [])
 }
 
-async function getCardsFromMtgApi(cardQuery) {
-  const { MTG_BOT_MTG_API_URL_PROD } = await getParameters('MTG_BOT_MTG_API_URL_PROD')
-  return (await fetch(`${MTG_BOT_MTG_API_URL_PROD}/v1/cards?${querystringify(cardQuery, 'c')}&fuzzy=true&prices=true`)).json()
-}
-
-async function fetchOwnedByStatistics(cards) {
-  const { MTG_BOT_MTG_CATALOG_URL_PROD } = await getParameters('MTG_BOT_MTG_CATALOG_URL_PROD')
-
-  const qs = querystringify(cards.map(card => card.name), 'cardName')
-  return (await fetch(`${MTG_BOT_MTG_CATALOG_URL_PROD}/api/ext/cards?${qs}`)).json()
-}
-
 function getOwnedStatisticsByCard(cardName, ownedStats) {
   const cardStats = ownedStats.filter(cardStats => cardStats.cardName === cardName)
 
@@ -120,11 +92,11 @@ async function handleEvent(slackEvent) {
   const uniqueCardNames = [...new Set(cards.map(card => card.name))]
 
   if (uniqueCardNames.length === 0) {
-    return postMessage({ text: ':clippy: - No results! :sob:', channel })
+    return postSlackMessage({ text: ':clippy: - No results! :sob:', channel })
   } else if (uniqueCardNames.length > 100) {
-    return postMessage({ text: `:mtg-black: - Too many results: ${uniqueCardNames.length}`, channel })
+    return postSlackMessage({ text: `:mtg-black: - Too many results: ${uniqueCardNames.length}`, channel })
   } else if (uniqueCardNames.length > 5) {
-    return postMessage({ text: uniqueCardNames.join(' / '), channel })
+    return postSlackMessage({ text: uniqueCardNames.join(' / '), channel })
   }
 
   const iconEmoji = getIconEmoji(slackEvent)
@@ -132,7 +104,7 @@ async function handleEvent(slackEvent) {
   const ownedStatistics = await fetchOwnedByStatistics(cards)
   const populatedCards = cards.map(card => ({...card, ownedBy: getOwnedStatisticsByCard(card.name, ownedStatistics)}))
   const attachments = getUniqueCardsWithRandomMultiverseId(populatedCards).map(card => toSlackAttachment(card, MTG_BOT_MTG_IMAGE_URL_PROD))
-  return postMessage({ attachments, channel, icon_emoji: iconEmoji })
+  return postSlackMessage({ attachments, channel, icon_emoji: iconEmoji })
 }
 
 module.exports.run = async (event) => {

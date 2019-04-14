@@ -1,3 +1,4 @@
+const fetch = require('node-fetch')
 const SSM = require('aws-sdk/clients/ssm')
 const ssm = new SSM()
 
@@ -25,3 +26,19 @@ function createResponse(json, statusCode = 200) {
 }
 
 module.exports.createResponse = createResponse
+
+async function postSlackMessage(message) {
+  const { MTG_BOT_SLACK_TOKEN_PROD } = await getParameters('MTG_BOT_SLACK_TOKEN_PROD')
+  return fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${MTG_BOT_SLACK_TOKEN_PROD}`,
+      'Content-Type': 'application/json;charset=utf-8'
+    },
+    body: JSON.stringify({
+      ...message
+    })
+  })
+}
+
+module.exports.postSlackMessage = postSlackMessage
