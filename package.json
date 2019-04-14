@@ -3,46 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "babel": {
-    "plugins": [
-      "transform-runtime",
-      "transform-object-rest-spread"
-    ],
-    "presets": [
-      "babel-preset-env",
-      "minify"
-    ]
-  },
-  "scripts": {
-    "test": "jest .",
-    "build": "babel ./src -d lib",
-    "start": "node lib/app",
-    "dev": "nodemon ./src/app.js --exec babel-node",
-    "eslint": "eslint src"
-  },
   "engines": {
-    "node": "9.*"
+    "node": "10.3.0"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "botkit": "^0.6.14",
-    "hapi": "^16.6.2",
-    "lodash": "^4.13.1",
-    "node-fetch": "^1.7.2",
-    "winston": "^2.4.0",
-    "winston-papertrail": "^1.0.5"
+    "aws-sdk": "^2.437.0",
+    "lodash": "^4.17.11",
+    "node-fetch": "^2.3.0"
   },
-  "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-minify": "^0.2.0",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
-    "babel-preset-env": "^1.6.0",
-    "eslint": "^4.6.1",
-    "eslint-config-airbnb-base": "^12.0.0",
-    "eslint-plugin-import": "^2.7.0",
-    "jest": "^20.0.4",
-    "nodemon": "^1.11.0"
-  }
+  "devDependencies": {}
 }
