@@ -15,6 +15,6 @@ functions:
       - http:
           path: /
           method: post
-  handleSqs:
-    handler: src/sqs-handler.run
+  slackPost:
+    handler: src/slack-post-handler.run
     reservedConcurrency: 1

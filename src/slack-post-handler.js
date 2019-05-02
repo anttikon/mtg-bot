@@ -20,7 +20,7 @@ function formatOwnedBy(card) {
 }
 
 function createLinks(card) {
-  const mcmLink = `<https://en.magiccardmarket.eu/?mainPage=showSearchResult&searchFor=${encodeURIComponent(card.name)}|MagicCardMarket>`
+  const mcmLink = `<https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}|MagicCardMarket>`
   const scryfallLink = `<https://scryfall.com/search?q=${encodeURIComponent(card.name)}|Scryfall>`
   return `${mcmLink} | ${scryfallLink}`
 }
@@ -108,8 +108,6 @@ async function handleEvent(slackEvent) {
 }
 
 module.exports.run = async (event) => {
-  for (const record of event.Records) {
-    await handleEvent(JSON.parse(record.body))
-  }
+  await handleEvent(event)
   return { ok: true }
 }

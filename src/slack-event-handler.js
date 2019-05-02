@@ -1,5 +1,5 @@
-const SQS = require('aws-sdk/clients/sqs')
-const sqs = new SQS({ apiVersion: '2012-11-05' })
+const Lambda = require('aws-sdk/clients/lambda')
+const lambda = new Lambda()
 const { getParameters, createResponse } = require('./utils')
 
 module.exports.run = async (event) => {
@@ -14,12 +14,15 @@ module.exports.run = async (event) => {
   }
 
   try {
-    const { MTG_BOT_SQS_URL_PROD } = await getParameters('MTG_BOT_SQS_URL_PROD')
+    const { MTG_BOT_SLACK_POST_LAMBDA } = await getParameters('MTG_BOT_SLACK_POST_LAMBDA')
 
-    await sqs.sendMessage({
-      MessageBody: JSON.stringify(slackEvent),
-      QueueUrl: MTG_BOT_SQS_URL_PROD
-    }).promise()
+    const params = {
+      FunctionName: MTG_BOT_SLACK_POST_LAMBDA,
+      InvocationType: 'Event',
+      LogType: 'None',
+      Payload: JSON.stringify(slackEvent),
+    }
+    await lambda.invoke(params).promise()
 
     return createResponse({ action: true })
   } catch (e) {
