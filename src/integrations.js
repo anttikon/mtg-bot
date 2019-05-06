@@ -6,7 +6,7 @@ const querystringify = (query, attribute) => query.map(value => `${attribute}=${
 async function getCardsFromMtgApi(cardQuery) {
   const { MTG_BOT_MTG_API_URL_PROD } = await getParameters('MTG_BOT_MTG_API_URL_PROD')
 
-  const qs = querystringify(cardQuery, 'q')
+  const qs = querystringify(cardQuery, 'c')
   return (await fetch(`${MTG_BOT_MTG_API_URL_PROD}/v1/cards?${qs}&fuzzy=true&prices=true`)).json()
 }
 
