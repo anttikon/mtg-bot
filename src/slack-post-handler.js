@@ -1,4 +1,4 @@
-const { orderBy, flatten, sumBy, uniq, sample } = require('lodash')
+const { orderBy, flatten, sumBy, uniq } = require('lodash')
 const { getParameters, postSlackMessage } = require('./utils')
 const { getCardsFromMtgApi, fetchOwnedByStatistics } = require('./integrations')
 
@@ -8,10 +8,7 @@ function parseCardQuery(message) {
 }
 
 function getImageUrl(card, MTG_IMAGE_URL) {
-  if (card.multiverseids) {
-    return `${MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseids.join('&multiverseid=')}`
-  }
-  return `${MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverseId}`
+  return `${MTG_IMAGE_URL}/api/v1/images?multiverseid=${card.multiverse_ids.join('&multiverseid=')}`
 }
 
 function formatOwnedBy(card) {
@@ -28,7 +25,7 @@ function createLinks(card) {
 function toSlackAttachment(card, MTG_BOT_MTG_IMAGE_API_URL_PROD) {
   const slackAttachment = {
     title: card.names && card.names.length > 0 ? `${card.names[0]} / ${card.names[1]}` : card.name,
-    title_link: `http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=${card.multiverseId}`,
+    title_link: `http://gatherer.wizards.com/Pages/Card/Details.aspx?multiverseid=${card.multiverse_ids[0]}`,
     image_url: getImageUrl(card, MTG_BOT_MTG_IMAGE_API_URL_PROD),
     footer: formatOwnedBy(card),
   }
@@ -41,16 +38,15 @@ function toSlackAttachment(card, MTG_BOT_MTG_IMAGE_API_URL_PROD) {
   return slackAttachment
 }
 
-function getUniqueCardsWithRandomMultiverseId(cards) {
+function getUniqueCards(cards) {
   return cards.reduce((result, card) => {
-    const {name, prices, ownedBy} = card
+    const {name, prices, ownedBy, multiverse_ids} = card
 
-    if(result.find(addedCard => addedCard.name === name)) {
+    if (result.find(addedCard => addedCard.name === name)) {
       return result
     }
 
-    const randomMultiverseId = sample(cards.filter(c => c.name === name).map(c => c.multiverseId))
-    return [...result, {name, multiverseId: randomMultiverseId, prices, ownedBy}]
+    return [...result, {name, multiverse_ids, prices, ownedBy}]
   }, [])
 }
 
@@ -86,7 +82,7 @@ async function handleEvent(slackEvent) {
     return false
   }
 
-  const { MTG_BOT_MTG_IMAGE_URL_PROD } = await getParameters( 'MTG_BOT_MTG_IMAGE_URL_PROD')
+  const { MTG_BOT_MTG_IMAGE_URL_PROD } = await getParameters('MTG_BOT_MTG_IMAGE_URL_PROD')
 
   const cards = await getCardsFromMtgApi(cardQuery)
   const uniqueCardNames = [...new Set(cards.map(card => card.name))]
@@ -103,11 +99,16 @@ async function handleEvent(slackEvent) {
 
   const ownedStatistics = await fetchOwnedByStatistics(cards)
   const populatedCards = cards.map(card => ({...card, ownedBy: getOwnedStatisticsByCard(card.name, ownedStatistics)}))
-  const attachments = getUniqueCardsWithRandomMultiverseId(populatedCards).map(card => toSlackAttachment(card, MTG_BOT_MTG_IMAGE_URL_PROD))
+  const attachments = getUniqueCards(populatedCards).map(card => toSlackAttachment(card, MTG_BOT_MTG_IMAGE_URL_PROD))
   return postSlackMessage({ attachments, channel, icon_emoji: iconEmoji })
 }
 
 module.exports.run = async (event) => {
-  await handleEvent(event)
-  return { ok: true }
+  try {
+    await handleEvent(event)
+    return { ok: true }
+  } catch (e) {
+    console.log(e)
+    return { ok: false }
+  }
 }
